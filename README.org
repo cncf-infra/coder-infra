@@ -69,6 +69,7 @@ read PACKET_API_KEY; export PACKET_API_KEY
 
 Initialise cluster-api with the Packet (Equinix Metal) infrastructure provider
 #+begin_src tmate :window coder-infra
+export EXP_CLUSTER_RESOURCE_SET=true
 clusterctl init --infrastructure packet --bootstrap talos --control-plane talos
 #+end_src
 
@@ -165,10 +166,10 @@ helm template cilium cilium/cilium \
     > ./cilium.yaml
 #+end_src
 
-#+RESULTS:
-#+begin_example
-"cilium" already exists with the same configuration, skipping
-#+end_example
+Multus
+#+begin_src shell :results silent
+curl -o multus.yaml -L https://github.com/k8snetworkplumbingwg/multus-cni/raw/master/deployments/multus-daemonset.yml
+#+end_src
 
 Metallb
 #+begin_src shell :results silent
@@ -231,7 +232,7 @@ helm template \
 
 Coder
 #+begin_src shell :results silent
-helm template -n coder coder https://github.com/coder/coder/releases/download/v0.12.9/coder_helm_0.12.9.tgz \
+helm template -n coder coder https://github.com/coder/coder/releases/download/v0.13.1/coder_helm_0.13.1.tgz \
     --values ./values/coder.yaml \
     > ./coder.yaml
 #+end_src
@@ -249,6 +250,11 @@ namespace/coder created
 Cilium
 #+begin_src shell :results silent
 kubectl --kubeconfig /tmp/cncf-coder-kubeconfig apply -f ./cilium.yaml
+#+end_src
+
+Multus
+#+begin_src shell :results silent
+kubectl --kubeconfig /tmp/cncf-coder-kubeconfig apply -f ./multus.yaml
 #+end_src
 
 Longhorn
@@ -347,6 +353,14 @@ kubectl --kubeconfig /tmp/cncf-coder-kubeconfig -n coder apply -f ./coder-role+r
 * Switch management
 #+begin_src tmate :window coder-infra
 clusterctl move -n cncf-coder --to-kubeconfig /tmp/cncf-coder-kubeconfig
+#+end_src
+
+* Patch cluster-api-provider-kubevirt
+until
+https://github.com/kubernetes-sigs/cluster-api-provider-kubevirt/pull/212
+is merged
+#+begin_src shell
+kubectl --kubeconfig /tmp/cncf-coder-kubeconfig -n capk-system       patch deployment capk-controller-manager        --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value":"ghcr.io/ii/cluster-api-provider-kubevirt@sha256:c1030577c70b4797fa1d3a8b56aa2a7009da2960e4a7d40f0528c3a9f376f604"}]'
 #+end_src
 
 * Tear down
