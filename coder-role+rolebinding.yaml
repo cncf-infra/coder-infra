@@ -45,12 +45,18 @@ rules:
       - get
       - list
   - apiGroups:
-      - "metrics.k8s.io"
+      - "networking.k8s.io"
+      - ""
     resources:
-      - pods
+      - ingresses
+      - services
     verbs:
       - get
       - list
+      - create
+      - patch
+      - update
+      - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -65,6 +71,33 @@ subjects:
   - kind: ServiceAccount
     name: coder
     namespace: coder
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: Role
+# metadata:
+#   name: coder-clusterapi-perms
+#   namespace: coder
+# rules:
+#   - apiGroups:
+#       - ""
+#     resources:
+#       - "configmaps"
+#     verbs:
+#       - "list"
+#       - "get"
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: RoleBinding
+# metadata:
+#   name: coder-clusterapi
+#   namespace: coder
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: Role
+#   name: coder-clusterapi-perms
+# subjects:
+#   - kind: ServiceAccount
+#     name: coder
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
